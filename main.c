@@ -44,7 +44,24 @@ unsigned char conversionMagnitude(unsigned char v) {
  * Initialise le hardware.
  */
 static void hardwareInitialise() {
-    // À implémenter.
+   
+    // Activer le temporisateur 2:
+    PIE1bits.TMR2IE = 1;      // Active les interruptions du TMR2.
+    IPR1bits.TMR2IP = 1;     // Interruptions de haute priorité
+    
+    
+    T2CONbits.TMR2ON = 1;       // Active le temporisateur.
+    T2CONbits.T2OUTPS = 0000;   // pas de division de fréquence
+    T2CONbits.T2CKPS = 00;   // pas de division de fréquence
+    
+    
+    // Activer les interruptions:
+    RCONbits.IPEN = 1;          // Active les niveaux d'interruptions.
+    INTCONbits.GIEH = 1;        // Active les interruptions de haute priorité.
+    INTCONbits.GIEL = 1;        // Active les interruptions de basse priorité.
+    
+    
+    
 }
 
 /**
