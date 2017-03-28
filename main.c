@@ -45,6 +45,20 @@ unsigned char conversionMagnitude(unsigned char v) {
  */
 static void hardwareInitialise() {
     // À implémenter.
+    
+    //configuration de l'entrée
+    ANSELA=0;
+    ANSELC=0;
+    
+    ANSELBbits.ANSB3 = 1; //configuration comme entrée analogique,
+    TRISBbits.RB3=1;//configure le port RB3 comme entrée
+    //INTCON2bits.RBPU=0; //active la résitance de tirage pas nécessaire car diviseur de tension 
+    //WPUBbits.WPUB3=1;//active la résitance de tirage pour le port RB3 pas nécessaire car diviseur de tension
+    
+    //configuratio des sortie digitales
+    //configure le port C comme sortie digitale
+    TRISCbits.RC0=0;
+    TRISCbits.RC1=0;
 }
 
 /**
