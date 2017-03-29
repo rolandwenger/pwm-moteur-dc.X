@@ -25,7 +25,18 @@ typedef enum {
  */
 Direction conversionDirection(unsigned char v) {
     // À implémenter.
-    return AVANT;
+    //lire la valeur du RB3
+    //faire un if pour savoir si plus ou moins 50% de la tension
+    if (v == 127){
+        return 0; 
+        
+    } else if (v < 127){
+        //plus petit que 50%
+        return ARRIERE;
+    } else {
+        //plus grand que 50%
+       return AVANT; 
+    }  
 }
 
 /**
@@ -34,8 +45,11 @@ Direction conversionDirection(unsigned char v) {
  * @return Cycle de travail du PWM.
  */
 unsigned char conversionMagnitude(unsigned char v) {
-    // À implémenter.
-    return 0;
+    unsigned char temp;
+	temp = v;
+	temp >>= 2;
+	temp += 62;
+    return temp;
 }
 
 #ifndef TEST
@@ -45,23 +59,52 @@ unsigned char conversionMagnitude(unsigned char v) {
  */
 static void hardwareInitialise() {
    
-    // Activer le temporisateur 2:
-    PIE1bits.TMR2IE = 1;      // Active les interruptions du TMR2.
-    IPR1bits.TMR2IP = 1;     // Interruptions de haute priorité
+    OSCCONbits.IRCF = 011; //Fosc de 1MHz
     
+    //configuration de l'entrée
+    ANSELA=0;
+    ANSELC=0;
     
-    T2CONbits.TMR2ON = 1;       // Active le temporisateur.
-    T2CONbits.T2OUTPS = 0000;   // pas de division de fréquence
-    T2CONbits.T2CKPS = 00;   // pas de division de fréquence
+    ANSELBbits.ANSB3 = 1; //configuration comme entrée analogique,
+    TRISBbits.RB3=1;//configure le port RB3 comme entrée
+    //INTCON2bits.RBPU=0; //active la résitance de tirage pas nécessaire car diviseur de tension 
+    //WPUBbits.WPUB3=1;//active la résitance de tirage pour le port RB3 pas nécessaire car diviseur de tension
     
-    
-    // Activer les interruptions:
+    //configuratio des sortie digitales
+    //configure le port C comme sortie digitale
+    TRISCbits.RC0=0;
+    TRISCbits.RC1=0;
+           
+       // Activer les interruptions:
     RCONbits.IPEN = 1;          // Active les niveaux d'interruptions.
     INTCONbits.GIEH = 1;        // Active les interruptions de haute priorité.
     INTCONbits.GIEL = 1;        // Active les interruptions de basse priorité.
+	
+	// Activer les interruptions du temporisateur 2:
+    PIE1bits.TMR2IE = 1;      // Active les interruptions du TMR2.
+    IPR1bits.TMR2IP = 1;     // Interruptions de haute priorité
     
+    //Config Timer2
+	CCPTMRS0bits.C1TSEL = 0; // CCP1 branché sur tmr2
+	T2CONbits.T2CKPS = 0; // Diviseur de fréq. pour tmr2 sur 32
+	T2CONbits.TMR2ON = 1; // Active le tmr2
+	PR2 = 250; // Période du tmr2.
+	
+	CCP1CONbits.CCP1M = 0xF; // Active le CCP1.
+	TRISCbits.RC2 = 0; // Active la sortie du CCP1.
+	
+		
+    T2CONbits.TMR2ON = 1;       // Active le temporisateur.
+    T2CONbits.T2OUTPS = 0000;   // pas de division de fréquence
+    T2CONbits.T2CKPS = 00;   // pas de division de fréquence
+    //PR2 = 24; // Période du tmr2: 32
     
-    
+//manque pour le pwm
+
+    //Conversion analogique digital
+    ADCON0bits.ADON = 1;
+    ADCON0bits.CHS = 1001; // configuration de la conversion analogique sur an9
+       
 }
 
 /**
