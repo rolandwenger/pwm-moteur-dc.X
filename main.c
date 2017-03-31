@@ -24,17 +24,15 @@ typedef enum {
  * @return AVANT ou ARRIERE.
  */
 Direction conversionDirection(unsigned char v) {
-    // À implémenter.
-    //lire la valeur du RB3
-    //faire un if pour savoir si plus ou moins 50% de la tension
-    if (v == 127){
-        return 0; 
+    
+    if (v == 127){ // le potentiomètre est a 50%
+        return 0; // les 2 sorties sont à 0
         
     } else if (v < 127){
-        //plus petit que 50%
+        //plus petit que 50% donc marche arrière
         return ARRIERE;
     } else {
-        //plus grand que 50%
+        //plus grand que 50% donc marche avant
        return AVANT; 
     }  
 }
@@ -45,12 +43,19 @@ Direction conversionDirection(unsigned char v) {
  * @return Cycle de travail du PWM.
  */
 unsigned char conversionMagnitude(unsigned char v) {
-    unsigned char temp;
-	temp = v;
-	temp >>= 2;
-	temp += 62;
-    return temp;
-}
+     int magnitude; // initialisation d'un variable entière pour nos calculs
+    
+    if(v<128) // si le potentiomètre est en dessous de 50%
+    {
+        magnitude = 254-2*v;
+    }
+    else// si le potentiomètre est en dessus de 50%
+    {
+        magnitude = (v-128)*2;
+    }
+    
+    return magnitude; // retourner la valeur calculée
+ }
 
 #ifndef TEST
 
@@ -59,14 +64,12 @@ unsigned char conversionMagnitude(unsigned char v) {
  */
 static void hardwareInitialise() {
    
-    OSCCONbits.IRCF = 011; //Fosc de 1MHz
-    
     //configuration de l'entrée
     ANSELA=0;
     ANSELC=0;
-    
     ANSELBbits.ANSB3 = 1; //configuration comme entrée analogique,
     TRISBbits.RB3=1;//configure le port RB3 comme entrée
+    
     //INTCON2bits.RBPU=0; //active la résitance de tirage pas nécessaire car diviseur de tension 
     //WPUBbits.WPUB3=1;//active la résitance de tirage pour le port RB3 pas nécessaire car diviseur de tension
     
@@ -85,26 +88,22 @@ static void hardwareInitialise() {
     IPR1bits.TMR2IP = 1;     // Interruptions de haute priorité
     
     //Config Timer2
-	CCPTMRS0bits.C1TSEL = 0; // CCP1 branché sur tmr2
-	T2CONbits.T2CKPS = 0; // Diviseur de fréq. pour tmr2 sur 32
 	T2CONbits.TMR2ON = 1; // Active le tmr2
-	PR2 = 250; // Période du tmr2.
-	
+    T2CONbits.TMR2ON = 1;      // Active le temporisateur.
+    T2CONbits.T2OUTPS = 1001;   // division par 10 en sortie pour trm2if toute les 10ms
+    T2CONbits.T2CKPS = 00;   // pas de division du prescaler d'entrée
+	PR2 = 250; // Période du tmr2 à 1ms  1000/4 = 250
+  
+    // Activer le PWM sur CCP1
+	CCPTMRS0bits.C1TSEL = 0; // CCP1 branché sur tmr2
 	CCP1CONbits.CCP1M = 0xF; // Active le CCP1.
 	TRISCbits.RC2 = 0; // Active la sortie du CCP1.
 	
-		
-    T2CONbits.TMR2ON = 1;       // Active le temporisateur.
-    T2CONbits.T2OUTPS = 0000;   // pas de division de fréquence
-    T2CONbits.T2CKPS = 00;   // pas de division de fréquence
-    //PR2 = 24; // Période du tmr2: 32
-    
-//manque pour le pwm
-
     //Conversion analogique digital
     ADCON0bits.ADON = 1;
     ADCON0bits.CHS = 1001; // configuration de la conversion analogique sur an9
-       
+    ADCON2bits.ADFM = 0;    // Les 8 bits plus signifiants sur ADRESH.
+    
 }
 
 /**
