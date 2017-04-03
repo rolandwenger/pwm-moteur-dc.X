@@ -25,7 +25,12 @@ typedef enum {
  */
 Direction conversionDirection(unsigned char v) {
     // À implémenter.
+    if(v<=127){ //i le potentiomètre est à moins de 50 %, le moteur tourne en arrière
+        return ARRIERE;
+    }
+    else {      //Si le potentiomètre est à plus de 50 %, le moteur tourne en avant
     return AVANT;
+    }
 }
 
 /**
@@ -35,7 +40,15 @@ Direction conversionDirection(unsigned char v) {
  */
 unsigned char conversionMagnitude(unsigned char v) {
     // À implémenter.
-    return 0;
+    int magnitude;
+    
+    if(v<128){
+        magnitude=254-v*2;
+    }
+    else{
+        magnitude=(v-128)*2;
+    }
+    return magnitude;
 }
 
 #ifndef TEST
@@ -55,10 +68,42 @@ static void hardwareInitialise() {
     //INTCON2bits.RBPU=0; //active la résitance de tirage pas nécessaire car diviseur de tension 
     //WPUBbits.WPUB3=1;//active la résitance de tirage pour le port RB3 pas nécessaire car diviseur de tension
     
-    //configuratio des sortie digitales
-    //configure le port C comme sortie digitale
-    TRISCbits.RC0=0;
-    TRISCbits.RC1=0;
+    //configuration des sorties digitales
+   
+    TRISCbits.RC0=0; //configure le port RC0 comme sortie digitale
+    TRISCbits.RC1=0; //configure le port RC1 comme sortie digitale
+    
+    // configuration des interruptions:
+    RCONbits.IPEN = 1; //Active les niveaux de priorité pour les interruptions
+    INTCONbits.GIEH = 1; //Les interruptions de haute priorités sont activées
+    INTCONbits.GIEL = 1; //Les interruptions de basse priorité sont activées
+
+    // configuration du temporisateur 2
+    T2CONbits.TMR2ON = 1;       // Active le temporisateur 2
+    T2CONbits.T2CKPS = 00;       // Pas de diviseur de fréq. pour temporisateur 2 
+    T2CONbits.T2OUTPS = 1001;   // divison de la fréquence de sortie par 10
+    PR2 = 250;                   // Période du temporisateur 2: 250/(Fosc/4)=1 kHz
+
+    // Prépare les interruptions de haute priorité temporisateur 2:
+    PIE1bits.TMR2IE = 1;        // Active les interruptions.
+    IPR1bits.TMR2IP = 1;        // En haute priorité.
+    PIR1bits.TMR2IF = 0;        // Baisse le drapeau.
+    
+    // Active le PWM sur CCP1:
+    CCPTMRS0bits.C1TSEL = 00;    // CCP1 branché sur tmr2
+    CCP1CONbits.P1M = 00;       // Comportement comme générateur PWM simple. Sortie uniquement sur P1A 
+    CCP1CONbits.CCP1M = 0xF;    // Active le CCP1
+    TRISCbits.RC2=0; //configure le port RC1 comme sortie digitale
+    
+    // Configure le module A/D:
+
+    ADCON0bits.ADON = 1;    // Allume le module A/D
+    ADCON0bits.CHS = 9;     // Branche le convertisseur sur AN9
+    ADCON2bits.ADFM = 1;    // Les 8 bits moins signifiants ...
+                            // ... sont sur ADRESL
+    ADCON2bits.ACQT = 3;    // Temps d'acquisition à 6 TAD.
+    ADCON2bits.ADCS = 0;    // À 1MHz, le TAD est à 2us.
+    
 }
 
 /**
