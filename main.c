@@ -57,52 +57,46 @@ unsigned char conversionMagnitude(unsigned char v) {
  * Initialise le hardware.
  */
 static void hardwareInitialise() {
-    // À implémenter.
-    
+   
     //configuration de l'entrée
     ANSELA=0;
     ANSELC=0;
-    
     ANSELBbits.ANSB3 = 1; //configuration comme entrée analogique,
     TRISBbits.RB3=1;//configure le port RB3 comme entrée
+    
     //INTCON2bits.RBPU=0; //active la résitance de tirage pas nécessaire car diviseur de tension 
     //WPUBbits.WPUB3=1;//active la résitance de tirage pour le port RB3 pas nécessaire car diviseur de tension
     
-    //configuration des sorties digitales
-   
-    TRISCbits.RC0=0; //configure le port RC0 comme sortie digitale
-    TRISCbits.RC1=0; //configure le port RC1 comme sortie digitale
+    //configuratio des sortie digitales
+    //configure le port C comme sortie digitale
+    TRISCbits.RC0=0;
+    TRISCbits.RC1=0;
+           
+       // Activer les interruptions:
+    RCONbits.IPEN = 1;          // Active les niveaux d'interruptions.
+    INTCONbits.GIEH = 1;        // Active les interruptions de haute priorité.
+    INTCONbits.GIEL = 1;        // Active les interruptions de basse priorité.
+	
+	// Activer les interruptions du temporisateur 2:
+    PIE1bits.TMR2IE = 1;      // Active les interruptions du TMR2.
+    IPR1bits.TMR2IP = 1;     // Interruptions de haute priorité
     
-    // configuration des interruptions:
-    RCONbits.IPEN = 1; //Active les niveaux de priorité pour les interruptions
-    INTCONbits.GIEH = 1; //Les interruptions de haute priorités sont activées
-    INTCONbits.GIEL = 1; //Les interruptions de basse priorité sont activées
-
-    // configuration du temporisateur 2
-    T2CONbits.TMR2ON = 1;       // Active le temporisateur 2
-    T2CONbits.T2CKPS = 00;       // Pas de diviseur de fréq. pour temporisateur 2 
-    T2CONbits.T2OUTPS = 1001;   // divison de la fréquence de sortie par 10
-    PR2 = 250;                   // Période du temporisateur 2: 250/(Fosc/4)=1 kHz
-
-    // Prépare les interruptions de haute priorité temporisateur 2:
-    PIE1bits.TMR2IE = 1;        // Active les interruptions.
-    IPR1bits.TMR2IP = 1;        // En haute priorité.
-    PIR1bits.TMR2IF = 0;        // Baisse le drapeau.
-    
-    // Active le PWM sur CCP1:
-    CCPTMRS0bits.C1TSEL = 00;    // CCP1 branché sur tmr2
-    CCP1CONbits.P1M = 00;       // Comportement comme générateur PWM simple. Sortie uniquement sur P1A 
-    CCP1CONbits.CCP1M = 0xF;    // Active le CCP1
-    TRISCbits.RC2=0; //configure le port RC1 comme sortie digitale
-    
-    // Configure le module A/D:
-
-    ADCON0bits.ADON = 1;    // Allume le module A/D
-    ADCON0bits.CHS = 9;     // Branche le convertisseur sur AN9
-    ADCON2bits.ADFM = 1;    // Les 8 bits moins signifiants ...
-                            // ... sont sur ADRESL
-    ADCON2bits.ACQT = 3;    // Temps d'acquisition à 6 TAD.
-    ADCON2bits.ADCS = 0;    // À 1MHz, le TAD est à 2us.
+    //Config Timer2
+	T2CONbits.TMR2ON = 1; // Active le tmr2
+    T2CONbits.TMR2ON = 1;      // Active le temporisateur.
+    T2CONbits.T2OUTPS = 0b1001;   // division par 10 en sortie pour trm2if toute les 10ms
+    T2CONbits.T2CKPS = 00;   // pas de division du prescaler d'entrée
+	PR2 = 250; // Période du tmr2 à 1ms  1000/4 = 250
+  
+    // Activer le PWM sur CCP1
+	CCPTMRS0bits.C1TSEL = 0; // CCP1 branché sur tmr2
+	CCP1CONbits.CCP1M = 0xF; // Active le CCP1.
+	TRISCbits.RC2 = 0; // Active la sortie du CCP1.
+	
+    //Conversion analogique digital
+    ADCON0bits.ADON = 1;
+    ADCON0bits.CHS = 0b1001; // configuration de la conversion analogique sur an9
+    ADCON2bits.ADFM = 0;    // Les 8 bits plus signifiants sur ADRESH.
     
 }
 
