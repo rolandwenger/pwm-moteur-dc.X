@@ -41,7 +41,7 @@ Direction conversionDirection(unsigned char v) {
 unsigned char conversionMagnitude(unsigned char v) {
     // À implémenter.
     int magnitude;
-    
+   
     if(v<128){
         magnitude=254-v*2;
     }
@@ -83,21 +83,20 @@ static void hardwareInitialise() {
     
     //Config Timer2
 	T2CONbits.TMR2ON = 1; // Active le tmr2
-    T2CONbits.TMR2ON = 1;      // Active le temporisateur.
     T2CONbits.T2OUTPS = 0b1001;   // division par 10 en sortie pour trm2if toute les 10ms
     T2CONbits.T2CKPS = 00;   // pas de division du prescaler d'entrée
-	PR2 = 250; // Période du tmr2 à 1ms  1000/4 = 250
+	PR2 = 255; // Période du tmr2 à 1ms  1000/4 = 250
   
     // Activer le PWM sur CCP1
 	CCPTMRS0bits.C1TSEL = 0; // CCP1 branché sur tmr2
-	CCP1CONbits.CCP1M = 0xF; // Active le CCP1.
+	CCP1CONbits.CCP1M = 0xC; // Active le CCP1.
 	TRISCbits.RC2 = 0; // Active la sortie du CCP1.
 	
     //Conversion analogique digital
     ADCON0bits.ADON = 1;
     ADCON0bits.CHS = 0b1001; // configuration de la conversion analogique sur an9
     ADCON2bits.ADFM = 0;    // Les 8 bits plus signifiants sur ADRESH.
-    
+
 }
 
 /**
